@@ -293,49 +293,21 @@ function switchTab(name, el) {
   el.classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'dashboard') renderDashboard();
-  if (name === 'grants') {  renderGrants(); }
-}
-
-// ── SETUP ──────────────────────────────────────────────────────────────────
-  else { banner.classList.remove('hidden'); }
-}
-
-  SCRIPT_URL = val;
-  localStorage.setItem('grants_script_url', SCRIPT_URL);
-  document.getElementById('setup-banner').classList.add('hidden');
-  toast('Connected! Loading grants…', 'success');
-  loadGrants();
+  if (name === 'grants') { renderGrants(); }
 }
 
 // ── API CALLS ──────────────────────────────────────────────────────────────
 async function api(params) {
   if (!SCRIPT_URL) { toast('Please connect to Google Sheets first', 'error'); return null; }
-  return new Promise((resolve) => {
-    const cbName = 'cb_' + Date.now();
-    const url = SCRIPT_URL + '?' + new URLSearchParams(params) + '&callback=' + cbName;
-    const script = document.createElement('script');
-    const timeout = setTimeout(() => {
-      delete window[cbName];
-      script.remove();
-      toast('Connection error — could not reach Google Sheets', 'error');
-      resolve(null);
-    }, 10000);
-    window[cbName] = (data) => {
-      clearTimeout(timeout);
-      delete window[cbName];
-      script.remove();
-      if (data.error) { toast('Error: ' + data.error, 'error'); resolve(null); return; }
-      resolve(data);
-    };
-    script.src = url;
-    script.onerror = () => {
-      clearTimeout(timeout);
-      delete window[cbName];
-      toast('Connection error — check script URL', 'error');
-      resolve(null);
-    };
-    document.head.appendChild(script);
-  });
+  try {
+    const url = SCRIPT_URL + '?' + new URLSearchParams(params);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) { toast('Error: ' + data.error, 'error'); return null; }
+    return data;
+  } catch(e) {
+    toast('Connection error — check your script URL', 'error'); return null;
+  }
 }
 
 async function loadGrants() {
