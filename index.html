@@ -246,7 +246,12 @@ function fmt(d) {
   if(!d) return '';
   var s = String(d);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Find any month name anywhere in the string e.g. "0500 (Central Daylight Time)/undefined/Fri May 01 2026"
+  // If it's already clean like "5/1/2026" or "5/1/2026" — return as May 1
+  if(s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    var p = s.split('/');
+    return months[parseInt(p[0])-1] + ' ' + parseInt(p[1]);
+  }
+  // Find any month name anywhere in the string
   for(var i=0; i<months.length; i++) {
     var idx = s.indexOf(months[i]+' ');
     if(idx > -1) {
@@ -255,51 +260,48 @@ function fmt(d) {
       if(!isNaN(day)) return months[i] + ' ' + day;
     }
   }
-  // Try MM/dd/yyyy
-  if(s.indexOf('/') > -1) {
-    var p = s.split('/');
-    if(p.length >= 2 && !isNaN(parseInt(p[0]))) return months[parseInt(p[0])-1] + ' ' + parseInt(p[1]);
-  }
   // Try YYYY-MM-DD
-  if(s.indexOf('-') > -1) {
+  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) {
     var p = s.split('-');
-    if(p.length >= 3) return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
   }
-  return '';
+  return s;
 }
 function daysUntil(d) {
   if(!d) return null;
   var s = String(d);
+  var dt;
+  // Clean MM/DD/YYYY e.g. "5/1/2026"
+  if(s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    var p = s.split('/');
+    dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
+    var now = new Date(); now.setHours(0,0,0,0);
+    return Math.ceil((dt-now)/86400000);
+  }
+  // YYYY-MM-DD
+  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    var p = s.split('-');
+    dt = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+    var now = new Date(); now.setHours(0,0,0,0);
+    return Math.ceil((dt-now)/86400000);
+  }
+  // Find month name anywhere in string e.g. "Fri May 01 2026..."
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Find month name anywhere in string
   for(var i=0; i<months.length; i++) {
     var idx = s.indexOf(months[i]+' ');
     if(idx > -1) {
       var rest = s.slice(idx + months[i].length + 1);
       var day = parseInt(rest);
-      // Find year
       var yearMatch = s.match(/\d{4}/);
       var year = yearMatch ? parseInt(yearMatch[0]) : new Date().getFullYear();
       if(!isNaN(day)) {
-        var dt = new Date(year, i, day);
+        dt = new Date(year, i, day);
         var now = new Date(); now.setHours(0,0,0,0);
         return Math.ceil((dt-now)/86400000);
       }
     }
   }
-  // Try MM/dd/yyyy
-  if(s.indexOf('/') > -1) {
-    var p = s.split('/');
-    if(p.length >= 3) {
-      var dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
-      var now = new Date(); now.setHours(0,0,0,0);
-      return Math.ceil((dt-now)/86400000);
-    }
-  }
-  var dt = new Date(s);
-  if(isNaN(dt)) return null;
-  var now = new Date(); now.setHours(0,0,0,0);
-  return Math.ceil((dt-now)/86400000);
+  return null;
 }
 function isDone(s) { return s==='Submitted'||s==='Awarded'||s==='Declined'; }
 function fmtTime(t) {
