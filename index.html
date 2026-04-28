@@ -254,19 +254,6 @@ function fmt(d) {
       if(!isNaN(day)) return months[i] + ' ' + day;
     }
   }
-  for(var i=0; i<months.length; i++) {
-    var idx = s.indexOf(months[i]+' ');
-    if(idx > -1) {
-      var rest = s.slice(idx + months[i].length + 1);
-      var day = parseInt(rest);
-      if(!isNaN(day)) return months[i] + ' ' + day;
-    }
-  }
-  // Try YYYY-MM-DD
-  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    var p = s.split('-');
-    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
-  }
   return s;
 }
 function daysUntil(d) {
