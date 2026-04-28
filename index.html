@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othram — Grants Tracker</title>
+<!-- v20260428-1 -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#000;--surface:#0d0d0d;--surface2:#141414;--border:#222;--border2:#2a2a2a;
+    --purple:#cc44ff;--purple-br:#dd66ff;--purple-dim:#8800cc;
+    --purple-glow:rgba(204,68,255,0.10);
+    --white:#fff;--text:#ccc;--muted:#666;
+    --danger:#ff4d4d;--warn:#ffaa33;--green:#33cc77;
+    --mono:'DM Mono',monospace;--sans:'Inter',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;font-size:14px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-name{font-weight:800;font-size:17px;color:var(--white);letter-spacing:.05em}
+  .logo-sub{font-size:9px;color:var(--purple);letter-spacing:.18em;text-transform:uppercase;font-family:var(--mono);margin-top:2px}
+  .year-badge{font-family:var(--mono);font-size:11px;color:var(--purple);border:1px solid var(--purple-dim);padding:4px 12px;border-radius:3px;background:var(--purple-glow)}
+  .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);padding:0 28px;overflow-x:auto}
+  .tab{padding:13px 22px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+  .tab:hover{color:var(--white)}.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+  main{padding:28px;max-width:1200px;margin:0 auto}
+  .panel{display:none}.panel.active{display:block}
+  .section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);font-family:var(--mono);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+  .stats-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px 20px;flex:1;min-width:100px}
+  .stat-num{font-size:30px;font-weight:800;color:var(--white);font-family:var(--mono);line-height:1}
+  .stat-num.purple{color:var(--purple)}.stat-num.orange{color:var(--warn)}.stat-num.red{color:var(--danger)}.stat-num.green{color:var(--green)}
+  .stat-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  .add-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:24px}
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .form-row:last-child{margin-bottom:0}
+  input,textarea,select{background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:9px 12px;border-radius:5px;font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s}
+  input:focus,textarea:focus,select:focus{border-color:var(--purple)}
+  input::placeholder,textarea::placeholder{color:var(--muted)}
+  textarea{resize:vertical;min-height:60px}
+  select option{background:#111}
+  .f1{flex:1;min-width:140px}.f2{flex:2;min-width:180px}.fsm{width:140px}.fxs{width:130px}
+  .btn{padding:9px 18px;border-radius:5px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+  .btn-primary{background:var(--purple);color:#000}.btn-primary:hover{background:var(--purple-br)}
+  .btn-outline{background:transparent;color:var(--purple);border:1px solid var(--purple-dim)}.btn-outline:hover{background:var(--purple-glow)}
+  .btn-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:3px;transition:color .15s}.btn-del:hover{color:var(--danger)}
+  .filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+  .f-btn{padding:5px 14px;border-radius:20px;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+  .f-btn.active,.f-btn:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-glow)}
+  .search-input{background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:5px 12px;border-radius:20px;font-family:var(--sans);font-size:12px;outline:none;transition:border-color .2s;min-width:180px}
+  .search-input:focus{border-color:var(--purple)}
+  .search-input::placeholder{color:var(--muted)}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+  .grant-table{width:100%;border-collapse:collapse}
+  .grant-table thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--surface);white-space:nowrap;cursor:pointer;user-select:none}
+  .grant-table thead th:hover{color:var(--white)}
+  .grant-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+  .grant-table tbody tr:hover{background:var(--surface2)}
+  .grant-table tbody td{padding:11px 14px;vertical-align:middle;font-size:13px}
+  .grant-table tbody tr:last-child{border-bottom:none}
+  .mono-cell{font-family:var(--mono);font-size:11px;color:var(--purple)}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);white-space:nowrap}
+  .badge-dot{width:5px;height:5px;border-radius:50%}
+  .badge-open{background:rgba(204,68,255,.12);color:var(--purple);border:1px solid var(--purple-dim)}.badge-open .badge-dot{background:var(--purple)}
+  .badge-review{background:rgba(255,170,51,.1);color:var(--warn);border:1px solid rgba(255,170,51,.3)}.badge-review .badge-dot{background:var(--warn)}
+  .badge-submitted{background:rgba(51,204,119,.1);color:var(--green);border:1px solid rgba(51,204,119,.3)}.badge-submitted .badge-dot{background:var(--green)}
+  .badge-awarded{background:rgba(51,204,119,.18);color:#55ffaa;border:1px solid rgba(51,204,119,.4)}.badge-awarded .badge-dot{background:#55ffaa}
+  .badge-declined{background:rgba(255,77,77,.08);color:#ff8888;border:1px solid rgba(255,77,77,.2)}.badge-declined .badge-dot{background:#ff8888}
+  .badge-pending{background:rgba(255,170,51,.07);color:#ffcc77;border:1px solid rgba(255,170,51,.2)}.badge-pending .badge-dot{background:#ffcc77}
+  .date-urgent{color:var(--danger);font-weight:600;font-family:var(--mono);font-size:12px}
+  .date-warn{color:var(--warn);font-weight:600;font-family:var(--mono);font-size:12px}
+  .date-ok{color:var(--text);font-family:var(--mono);font-size:12px}
+  .date-past{color:var(--muted);font-family:var(--mono);font-size:12px}
+  .owner-tag{font-family:var(--mono);font-size:10px;color:var(--purple);background:var(--purple-glow);border:1px solid var(--purple-dim);padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .sol-link{color:var(--purple);font-family:var(--mono);font-size:11px;text-decoration:none;border-bottom:1px dashed var(--purple-dim);transition:color .15s}
+  .sol-link:hover{color:var(--purple-br)}
+  .no-link{color:var(--muted);font-family:var(--mono);font-size:11px;font-style:italic}
+  .grant-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:border-color .2s}
+  .grant-card:hover{border-color:var(--border2)}
+  .gc-sol{font-family:var(--mono);font-size:11px;color:var(--purple);min-width:140px;flex-shrink:0}
+  .gc-funder{flex:1;font-weight:700;font-size:13px;color:var(--white);min-width:120px}
+  .empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:13px}
+  .empty-icon{font-size:30px;margin-bottom:8px;opacity:.3}
+  .table-wrap{overflow-x:auto}
+  .grant-table tbody tr.notes-row td{padding:0}
+  .notes-expand{display:none;padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border)}
+  .notes-expand.open{display:block}
+  .notes-content{font-size:12px;color:var(--text);line-height:1.65;white-space:pre-wrap;font-family:var(--sans)}
+  .notes-content.empty{color:var(--muted);font-style:italic}
+  .grant-table tbody tr.data-row{cursor:pointer}
+  .grant-table tbody tr.data-row td .row-toggle{font-size:10px;color:var(--muted);transition:transform .2s;display:inline-block}
+  .grant-table tbody tr.data-row.expanded td .row-toggle{transform:rotate(180deg);color:var(--purple)}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:12px;font-family:var(--mono);color:var(--white);z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.error{border-color:var(--danger);color:var(--danger)}
+  .toast.success{border-color:var(--green);color:var(--green)}
+  .loading-row td{text-align:center;padding:28px;color:var(--muted);font-family:var(--mono);font-size:12px}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 1.5L24 7.5V18.5L13 24.5L2 18.5V7.5L13 1.5Z" stroke="#cc44ff" stroke-width="1.5" fill="rgba(204,68,255,0.08)"/>
+      <circle cx="13" cy="13" r="3.5" fill="#cc44ff"/>
+    </svg>
+    <div>
+      <div class="logo-name">OTHRAM</div>
+      <div class="logo-sub">Grants Tracker</div>
+    </div>
+  </div>
+  <span class="year-badge" id="yearBadge">2026</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="switchTab('grants',this)">All Grants</div>
+</div>
+
+<main>
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div id="stats-bar" class="stats-bar"></div>
+    <div class="section-label">Upcoming Deadlines</div>
+    <div id="dash-upcoming"></div>
+    <div class="section-label" style="margin-top:28px">Recently Added</div>
+    <div id="dash-recent"></div>
+  </div>
+
+  <!-- ALL GRANTS -->
+  <div class="panel" id="panel-grants">
+    <div class="add-box">
+      <div class="section-label">Add Grant</div>
+      <div class="form-row">
+        <input class="f1" type="text" id="g-solNum" placeholder="Solicitation number (e.g. HHS-2025-001)">
+        <input class="f2" type="text" id="g-funder" placeholder="Funder / Program name">
+        <select class="fsm" id="g-status">
+          <option value="Open">Open</option>
+          <option value="In Review">In Review</option>
+          <option value="Pending">Pending</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Awarded">Awarded</option>
+          <option value="Declined">Declined</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Questions Due</span>
+          <input class="fxs" type="date" id="g-questionsDate">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Internal Due</span>
+          <input class="fxs" type="date" id="g-internalDue">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Close Date</span>
+          <input class="fxs" type="date" id="g-closeDate">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Time (EST)</span>
+          <input class="fxs" type="time" id="g-closeTime">
+        </div>
+      </div>
+      <div class="form-row">
+        <input class="f1" type="text" id="g-reviewBy" placeholder="Review by (name)">
+        <input class="f1" type="text" id="g-owner" placeholder="Owner (lead staff)">
+        <input class="f2" type="url" id="g-link" placeholder="Solicitation link (https://...)">
+      </div>
+      <div class="form-row">
+        <textarea class="f1" id="g-notes" placeholder="Notes — requirements, contacts, key details..."></textarea>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary" id="g-add-btn" onclick="addGrant()">+ Add Grant</button>
+        <span id="g-edit-hint" style="display:none;font-family:var(--mono);font-size:11px;color:var(--warn);align-self:center">Editing — click Update Grant to save</span>
+        <button class="btn btn-outline" id="g-update-btn" style="display:none" onclick="updateGrant()">✓ Update Grant</button>
+        <button class="btn-del" id="g-cancel-btn" style="display:none;font-size:13px;padding:6px 10px" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="topbar-row">
+      <div class="filters">
+        <button class="f-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="f-btn" onclick="setFilter('Open',this)">Open</button>
+        <button class="f-btn" onclick="setFilter('In Review',this)">In Review</button>
+        <button class="f-btn" onclick="setFilter('Pending',this)">Pending</button>
+        <button class="f-btn" onclick="setFilter('Submitted',this)">Submitted</button>
+        <button class="f-btn" onclick="setFilter('Awarded',this)">Awarded</button>
+        <button class="f-btn" onclick="setFilter('urgent',this)">⚠ Urgent</button>
+        <input class="search-input" id="g-search" placeholder="Search…" oninput="renderGrants()">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="loadGrants()">↺ Refresh</button>
+        <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="section-label">Grant Applications</div>
+    <div class="table-wrap">
+      <table class="grant-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('solNum')">Sol # ↕</th>
+            <th onclick="sortBy('funder')">Funder / Program ↕</th>
+            <th onclick="sortBy('questionsDate')">Questions Due ↕</th>
+            <th onclick="sortBy('internalDue')">Internal Due ↕</th>
+            <th onclick="sortBy('closeDate')">Close Date ↕</th>
+            <th>Time (EST)</th>
+            <th onclick="sortBy('reviewBy')">Review By ↕</th>
+            <th onclick="sortBy('owner')">Owner ↕</th>
+            <th onclick="sortBy('status')">Status ↕</th>
+            <th>Solicitation</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="grants-tbody"></tbody>
+      </table>
+      <div class="empty" id="grants-empty" style="display:none">
+        <div class="empty-icon">📋</div>No grants match. Add one above.
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDHhEDezyaxAYtm2-VvLbS08_gTn2-EbFnCqv31tmk-LtfExA1VuOVsDtBweXbSVNl/exec';
+
+var grants = [];
+var grantFilter = 'all';
+var sortKey = 'closeDate';
+var sortDir = 1;
+var editingId = null;
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function today() { return new Date().toISOString().slice(0,10); }
+function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+function fmt(d) {
+  if(!d) return '';
+  var s = String(d);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Find any month name anywhere in the string e.g. "0500 (Central Daylight Time)/undefined/Fri May 01 2026"
+  for(var i=0; i<months.length; i++) {
+    var idx = s.indexOf(months[i]+' ');
+    if(idx > -1) {
+      var rest = s.slice(idx + months[i].length + 1);
+      var day = parseInt(rest);
+      if(!isNaN(day)) return months[i] + ' ' + day;
+    }
+  }
+  // Try MM/dd/yyyy
+  if(s.indexOf('/') > -1) {
+    var p = s.split('/');
+    if(p.length >= 2 && !isNaN(parseInt(p[0]))) return months[parseInt(p[0])-1] + ' ' + parseInt(p[1]);
+  }
+  // Try YYYY-MM-DD
+  if(s.indexOf('-') > -1) {
+    var p = s.split('-');
+    if(p.length >= 3) return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
+  }
+  return '';
+}
+function daysUntil(d) {
+  if(!d) return null;
+  var s = String(d);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Find month name anywhere in string
+  for(var i=0; i<months.length; i++) {
+    var idx = s.indexOf(months[i]+' ');
+    if(idx > -1) {
+      var rest = s.slice(idx + months[i].length + 1);
+      var day = parseInt(rest);
+      // Find year
+      var yearMatch = s.match(/\d{4}/);
+      var year = yearMatch ? parseInt(yearMatch[0]) : new Date().getFullYear();
+      if(!isNaN(day)) {
+        var dt = new Date(year, i, day);
+        var now = new Date(); now.setHours(0,0,0,0);
+        return Math.ceil((dt-now)/86400000);
+      }
+    }
+  }
+  // Try MM/dd/yyyy
+  if(s.indexOf('/') > -1) {
+    var p = s.split('/');
+    if(p.length >= 3) {
+      var dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
+      var now = new Date(); now.setHours(0,0,0,0);
+      return Math.ceil((dt-now)/86400000);
+    }
+  }
+  var dt = new Date(s);
+  if(isNaN(dt)) return null;
+  var now = new Date(); now.setHours(0,0,0,0);
+  return Math.ceil((dt-now)/86400000);
+}
+function isDone(s) { return s==='Submitted'||s==='Awarded'||s==='Declined'; }
+function fmtTime(t) {
+  if(!t) return '';
+  var p=t.split(':'), hr=parseInt(p[0]), ampm=hr>=12?'PM':'AM';
+  return (hr%12||12)+':'+p[1]+' '+ampm+' EST';
+}
+
+function toast(msg, type) {
+  var el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show'+(type?' '+type:'');
+  setTimeout(function(){ el.className='toast'; }, 3000);
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='dashboard') renderDashboard();
+  if(name==='grants') renderGrants();
+}
+
+function api(params, callback) {
+  var cbName = 'cb_'+Date.now();
+  var url = SCRIPT_URL+'?'+Object.keys(params).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&')+'&callback='+cbName;
+  var script = document.createElement('script');
+  var timer = setTimeout(function(){
+    delete window[cbName]; script.remove();
+    toast('Connection error — could not reach Google Sheets','error');
+    callback(null);
+  }, 12000);
+  window[cbName] = function(data){
+    clearTimeout(timer); delete window[cbName]; script.remove();
+    if(data && data.error){ toast('Error: '+data.error,'error'); callback(null); return; }
+    callback(data);
+  };
+  script.onerror = function(){
+    clearTimeout(timer); delete window[cbName];
+    toast('Script load error','error'); callback(null);
+  };
+  script.src = url;
+  document.head.appendChild(script);
+}
+
+function loadGrants() {
+  var tbody = document.getElementById('grants-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="11">Loading from Google Sheets…</td></tr>';
+  api({action:'getAll'}, function(data){
+    if(data && data.grants){
+      grants = data.grants;
+      renderGrants();
+      renderDashboard();
+      toast('Loaded '+grants.length+' grants','success');
+    }
+  });
+}
+
+function getFormValues() {
+  return {
+    solNum:        document.getElementById('g-solNum').value.trim(),
+    funder:        document.getElementById('g-funder').value.trim(),
+    status:        document.getElementById('g-status').value,
+    questionsDate: document.getElementById('g-questionsDate').value,
+    internalDue:   document.getElementById('g-internalDue').value,
+    closeDate:     document.getElementById('g-closeDate').value,
+    closeTime:     document.getElementById('g-closeTime').value,
+    reviewBy:      document.getElementById('g-reviewBy').value.trim(),
+    owner:         document.getElementById('g-owner').value.trim(),
+    link:          document.getElementById('g-link').value.trim(),
+    notes:         document.getElementById('g-notes').value.trim()
+  };
+}
+
+function clearForm() {
+  ['g-solNum','g-funder','g-questionsDate','g-internalDue','g-closeDate','g-closeTime','g-reviewBy','g-owner','g-link','g-notes'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('g-status').value='Open';
+}
+
+function addGrant() {
+  var g = getFormValues();
+  if(!g.solNum && !g.funder){ toast('Please enter a solicitation number or funder name','error'); return; }
+  g.id = uid();
+  var btn = document.getElementById('g-add-btn');
+  btn.textContent='Saving…'; btn.disabled=true;
+  api({action:'add', grant:JSON.stringify(g)}, function(data){
+    btn.textContent='+ Add Grant'; btn.disabled=false;
+    if(!data) return;
+    grants.unshift(data.grant||g);
+    toast('Grant added!','success');
+    clearForm(); renderGrants(); renderDashboard();
+  });
+}
+
+function editGrant(id) {
+  var g = grants.find(function(x){ return x.id===id; });
+  if(!g) return;
+  editingId = id;
+  document.getElementById('g-solNum').value = g.solNum||'';
+  document.getElementById('g-funder').value = g.funder||'';
+  document.getElementById('g-status').value = g.status||'Open';
+  document.getElementById('g-questionsDate').value = g.questionsDate||'';
+  document.getElementById('g-internalDue').value = g.internalDue||'';
+  document.getElementById('g-closeDate').value = g.closeDate||'';
+  document.getElementById('g-closeTime').value = g.closeTime||'';
+  document.getElementById('g-reviewBy').value = g.reviewBy||'';
+  document.getElementById('g-owner').value = g.owner||'';
+  document.getElementById('g-link').value = g.link||'';
+  document.getElementById('g-notes').value = g.notes||'';
+  document.getElementById('g-edit-hint').style.display='inline-flex';
+  document.getElementById('g-update-btn').style.display='inline-block';
+  document.getElementById('g-cancel-btn').style.display='inline-block';
+  document.getElementById('g-add-btn').style.display='none';
+  document.querySelector('.add-box').scrollIntoView({behavior:'smooth'});
+}
+
+function updateGrant() {
+  if(!editingId) return;
+  var g = Object.assign({id:editingId}, getFormValues());
+  var btn = document.getElementById('g-update-btn');
+  btn.textContent='Saving…'; btn.disabled=true;
+  api({action:'update', grant:JSON.stringify(g)}, function(data){
+    btn.textContent='✓ Update Grant'; btn.disabled=false;
+    if(!data) return;
+    grants = grants.map(function(x){ return x.id===editingId?g:x; });
+    toast('Grant updated!','success');
+    cancelEdit(); renderGrants(); renderDashboard();
+  });
+}
+
+function cancelEdit() {
+  editingId=null; clearForm();
+  document.getElementById('g-edit-hint').style.display='none';
+  document.getElementById('g-update-btn').style.display='none';
+  document.getElementById('g-cancel-btn').style.display='none';
+  document.getElementById('g-add-btn').style.display='inline-block';
+}
+
+function delGrant(id) {
+  if(!confirm('Delete this grant?')) return;
+  api({action:'delete', id:id}, function(data){
+    if(!data) return;
+    grants = grants.filter(function(x){ return x.id!==id; });
+    toast('Grant deleted','success');
+    renderGrants(); renderDashboard();
+  });
+}
+
+function changeStatus(id, val) {
+  var g = grants.find(function(x){ return x.id===id; });
+  if(!g) return;
+  g.status = val;
+  api({action:'update', grant:JSON.stringify(g)}, function(data){
+    if(data) { renderGrants(); renderDashboard(); }
+  });
+}
+
+function setFilter(f, el) {
+  grantFilter=f;
+  document.querySelectorAll('.f-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active'); renderGrants();
+}
+
+function sortBy(key) {
+  if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  renderGrants();
+}
+
+function filteredGrants() {
+  var q = (document.getElementById('g-search')?document.getElementById('g-search').value:'').toLowerCase();
+  var list = grants.slice();
+  if(grantFilter==='urgent') list=list.filter(function(g){ var d=daysUntil(g.closeDate); return d!==null&&d<=14&&!isDone(g.status); });
+  else if(grantFilter!=='all') list=list.filter(function(g){ return g.status===grantFilter; });
+  if(q) list=list.filter(function(g){ return (g.solNum+g.funder+g.reviewBy+g.owner+g.notes).toLowerCase().indexOf(q)>-1; });
+  list.sort(function(a,b){
+    var av=(a[sortKey]||'').toLowerCase(), bv=(b[sortKey]||'').toLowerCase();
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
+  return list;
+}
+
+function dateClass(d, done) {
+  if(!d||done) return 'date-ok';
+  var days=daysUntil(d);
+  if(days<0) return 'date-past';
+  if(days<=7) return 'date-urgent';
+  if(days<=21) return 'date-warn';
+  return 'date-ok';
+}
+
+function dateFmt(d, done) {
+  if(!d) return '<span class="no-link">—</span>';
+  var cls=dateClass(d,done), days=daysUntil(d);
+  var prefix=(!done&&days!==null&&((days<=7&&days>=0)||days<0))?'⚠ ':'';
+  return '<span class="'+cls+'">'+prefix+fmt(d)+'</span>';
+}
+
+function statusBadge(s) {
+  var map={'Open':'open','In Review':'review','Pending':'pending','Submitted':'submitted','Awarded':'awarded','Declined':'declined'};
+  var cls=map[s]||'open';
+  return '<span class="badge badge-'+cls+'"><span class="badge-dot"></span>'+esc(s)+'</span>';
+}
+
+function renderGrants() {
+  var list=filteredGrants();
+  var tbody=document.getElementById('grants-tbody');
+  var empty=document.getElementById('grants-empty');
+  if(!list.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML=list.map(function(g){
+    var opts=['Open','In Review','Pending','Submitted','Awarded','Declined'].map(function(o){
+      return '<option value="'+o+'"'+(g.status===o?' selected':'')+'>'+o+'</option>';
+    }).join('');
+    return '<tr class="data-row" onclick="toggleNotes(\''+g.id+'\',event)" id="row-'+g.id+'">'
+      +'<td class="mono-cell">'+(esc(g.solNum)||'<span class="no-link">—</span>')+'</td>'
+      +'<td style="color:var(--white);font-weight:600">'+(esc(g.funder)||'<span class="no-link">—</span>')+'</td>'
+      +'<td>'+dateFmt(g.questionsDate,isDone(g.status))+'</td>'
+      +'<td>'+dateFmt(g.internalDue,isDone(g.status))+'</td>'
+      +'<td>'+dateFmt(g.closeDate,isDone(g.status))+'</td>'
+      +'<td class="mono-cell">'+(g.closeTime?fmtTime(g.closeTime):'<span class="no-link">—</span>')+'</td>'
+      +'<td style="font-size:12px">'+(esc(g.reviewBy)||'<span class="no-link">—</span>')+'</td>'
+      +'<td>'+(g.owner?'<span class="owner-tag">'+esc(g.owner)+'</span>':'<span class="no-link">—</span>')+'</td>'
+      +'<td onclick="event.stopPropagation()" style="position:relative"><div style="position:relative;display:inline-block">'+statusBadge(g.status)+'<select onchange="changeStatus(\''+g.id+'\',this.value)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">'+opts+'</select></div></td>'
+      +'<td onclick="event.stopPropagation()">'+(g.link?'<a href="'+esc(g.link)+'" target="_blank" class="sol-link">↗ View</a>':'<span class="no-link">no link</span>')+'</td>'
+      +'<td style="white-space:nowrap" onclick="event.stopPropagation()"><span class="row-toggle">▼</span><button class="btn-del" onclick="editGrant(\''+g.id+'\')" title="Edit" style="font-size:13px">✏</button><button class="btn-del" onclick="delGrant(\''+g.id+'\')" title="Delete">✕</button></td>'
+      +'</tr>'
+      +'<tr class="notes-row"><td colspan="11"><div class="notes-expand" id="notes-'+g.id+'"><div class="notes-content'+(g.notes?'':' empty')+'">'+(g.notes?esc(g.notes):'No notes recorded.')+'</div></div></td></tr>';
+  }).join('');
+}
+
+function toggleNotes(id) {
+  var n=document.getElementById('notes-'+id);
+  var r=document.getElementById('row-'+id);
+  if(n) n.classList.toggle('open');
+  if(r) r.classList.toggle('expanded');
+}
+
+function renderDashboard() {
+  var total=grants.length;
+  var open=grants.filter(function(g){ return !isDone(g.status); }).length;
+  var urgent=grants.filter(function(g){ var d=daysUntil(g.closeDate); return d!==null&&d<=14&&!isDone(g.status); }).length;
+  var overdue=grants.filter(function(g){ var d=daysUntil(g.closeDate); return d!==null&&d<0&&!isDone(g.status); }).length;
+  var done=grants.filter(function(g){ return g.status==='Submitted'||g.status==='Awarded'; }).length;
+
+  document.getElementById('stats-bar').innerHTML=
+    '<div class="stat"><div class="stat-num purple">'+total+'</div><div class="stat-label">Total Grants</div></div>'
+    +'<div class="stat"><div class="stat-num">'+open+'</div><div class="stat-label">Active / Open</div></div>'
+    +'<div class="stat"><div class="stat-num orange">'+urgent+'</div><div class="stat-label">Due ≤ 14 Days</div></div>'
+    +'<div class="stat"><div class="stat-num red">'+overdue+'</div><div class="stat-label">Overdue</div></div>'
+    +'<div class="stat"><div class="stat-num green">'+done+'</div><div class="stat-label">Submitted / Awarded</div></div>';
+
+  var upcoming=grants.filter(function(g){ return g.closeDate&&!isDone(g.status); }).sort(function(a,b){ return a.closeDate.localeCompare(b.closeDate); }).slice(0,8);
+  var uEl=document.getElementById('dash-upcoming');
+  if(!upcoming.length){ uEl.innerHTML='<div class="empty"><div class="empty-icon">✅</div>No upcoming deadlines.</div>'; }
+  else { uEl.innerHTML=upcoming.map(function(g){
+    var days=daysUntil(g.closeDate);
+    var cls=days<0?'date-past':days<=7?'date-urgent':days<=21?'date-warn':'date-ok';
+    var label=days===null?'':days<0?' <span style="color:var(--danger);font-size:10px">(overdue)</span>':' <span style="color:var(--muted);font-size:10px">('+days+'d)</span>';
+    return '<div class="grant-card"><span class="gc-sol">'+(esc(g.solNum)||'—')+'</span><span class="gc-funder">'+(esc(g.funder)||'—')+'</span>'+(g.owner?'<span class="owner-tag">'+esc(g.owner)+'</span>':'')+statusBadge(g.status)+'<span class="'+cls+'" style="margin-left:auto;flex-shrink:0">'+(days!==null&&days<=7?'⚠ ':'')+fmt(g.closeDate)+label+'</span></div>';
+  }).join(''); }
+
+  var rEl=document.getElementById('dash-recent');
+  if(!grants.length){ rEl.innerHTML='<div class="empty"><div class="empty-icon">📋</div>No grants added yet.</div>'; }
+  else { rEl.innerHTML=grants.slice(0,5).map(function(g){
+    return '<div class="grant-card"><span class="gc-sol">'+(esc(g.solNum)||'—')+'</span><span class="gc-funder">'+(esc(g.funder)||'—')+'</span>'+(g.owner?'<span class="owner-tag">'+esc(g.owner)+'</span>':'')+statusBadge(g.status)+'<span class="'+dateClass(g.closeDate,isDone(g.status))+'" style="margin-left:auto;flex-shrink:0">'+(g.closeDate?fmt(g.closeDate):'<span class="no-link">no date</span>')+'</span></div>';
+  }).join(''); }
+}
+
+function exportCSV() {
+  var headers=['Solicitation #','Funder/Program','Questions Due','Internal Due','Close Date','Time (EST)','Review By','Owner','Status','Link','Notes'];
+  var rows=grants.map(function(g){ return [g.solNum,g.funder,g.questionsDate,g.internalDue,g.closeDate,g.closeTime?fmtTime(g.closeTime):'',g.reviewBy,g.owner,g.status,g.link,g.notes].map(function(v){ return '"'+(v||'').replace(/"/g,'""')+'"'; }); });
+  var csv=[headers.join(',')].concat(rows.map(function(r){ return r.join(','); })).join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='grants-tracker.csv'; a.click();
+}
+
+document.getElementById('yearBadge').textContent = new Date().getFullYear();
+loadGrants();
+renderDashboard();
+</script>
+</body>
+</html>
