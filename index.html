@@ -246,14 +246,17 @@ function fmt(d) {
   if(!d) return '';
   var s = String(d);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Find any month name anywhere in the string e.g. "0500 (Central Daylight Time)/undefined/Fri May 01 2026"
   for(var i=0; i<months.length; i++) {
     var idx = s.indexOf(months[i]+' ');
     if(idx > -1) {
-      var rest = s.slice(idx + months[i].length + 1);
-      var day = parseInt(rest);
+      var day = parseInt(s.slice(idx + 4));
       if(!isNaN(day)) return months[i] + ' ' + day;
     }
+  }
+  if(s.indexOf('/') > -1) { var p=s.split('/'); return months[parseInt(p[0])-1]+' '+parseInt(p[1]); }
+  if(s.indexOf('-') > -1) { var p=s.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2]); }
+  return '';
+}
   }
   // Try MM/dd/yyyy
   if(s.indexOf('/') > -1) {
