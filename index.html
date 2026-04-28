@@ -246,12 +246,14 @@ function fmt(d) {
   if(!d) return '';
   var s = String(d);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // If it's already clean like "5/1/2026" or "5/1/2026" — return as May 1
-  if(s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-    var p = s.split('/');
-    return months[parseInt(p[0])-1] + ' ' + parseInt(p[1]);
+  for(var i=0; i<months.length; i++) {
+    var idx = s.indexOf(months[i]);
+    if(idx > -1) {
+      var after = s.slice(idx + months[i].length + 1);
+      var day = parseInt(after);
+      if(!isNaN(day)) return months[i] + ' ' + day;
+    }
   }
-  // Find any month name anywhere in the string
   for(var i=0; i<months.length; i++) {
     var idx = s.indexOf(months[i]+' ');
     if(idx > -1) {
