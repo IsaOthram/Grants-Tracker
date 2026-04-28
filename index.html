@@ -241,8 +241,28 @@ var editingId = null;
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function today() { return new Date().toISOString().slice(0,10); }
 function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
-function fmt(d) { if(!d) return ''; var p=d.split('-'); return p[1]+'/'+p[2]+'/'+p[0]; }
-function daysUntil(d) { if(!d) return null; return Math.ceil((new Date(d)-new Date())/86400000); }
+function fmt(d) {
+  if(!d) return '';
+  // Handle full ISO timestamp e.g. 2026-05-01T05:00:00.000Z
+  if(d.indexOf('T') > -1) { d = d.split('T')[0]; }
+  // Handle MM/DD/YYYY already formatted
+  if(d.indexOf('/') > -1) {
+    var p = d.split('/');
+    if(p.length === 3) return p[0]+'/'+p[1]+'/'+p[2];
+  }
+  // Handle YYYY-MM-DD
+  var p = d.split('-');
+  if(p.length === 3) return p[1]+'/'+p[2]+'/'+p[0];
+  return d;
+}
+function daysUntil(d) {
+  if(!d) return null;
+  // Strip timestamp if present
+  if(d.indexOf('T') > -1) d = d.split('T')[0];
+  // Convert MM/DD/YYYY to YYYY-MM-DD for reliable parsing
+  if(d.indexOf('/') > -1) { var p=d.split('/'); d=p[2]+'-'+p[0]+'-'+p[1]; }
+  return Math.ceil((new Date(d)-new Date())/86400000);
+}
 function isDone(s) { return s==='Submitted'||s==='Awarded'||s==='Declined'; }
 function fmtTime(t) {
   if(!t) return '';
