@@ -243,44 +243,23 @@ function today() { return new Date().toISOString().slice(0,10); }
 function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
 function fmt(d) {
   if(!d) return '';
-  // If it's a Date object or date-like string with time info
-  var s = String(d);
-  // Handle "Fri May 01 2026 00:00:00 GMT..." format
-  if(s.indexOf('GMT') > -1 || s.indexOf('May') > -1 || s.indexOf('Jan') > -1 || s.indexOf('Feb') > -1 || s.indexOf('Mar') > -1 || s.indexOf('Apr') > -1 || s.indexOf('Jun') > -1 || s.indexOf('Jul') > -1 || s.indexOf('Aug') > -1 || s.indexOf('Sep') > -1 || s.indexOf('Oct') > -1 || s.indexOf('Nov') > -1 || s.indexOf('Dec') > -1) {
-    var dt = new Date(s);
-    if(!isNaN(dt)) {
-      var mm = String(dt.getUTCMonth()+1).padStart(2,'0');
-      var dd = String(dt.getUTCDate()).padStart(2,'0');
-      var yyyy = dt.getUTCFullYear();
-      return mm+'/'+dd+'/'+yyyy;
-    }
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Try parsing as a date — works for all formats including "Fri May 01 2026 GMT..."
+  var dt = new Date(d);
+  if(!isNaN(dt)) {
+    return months[dt.getUTCMonth()] + ' ' + dt.getUTCDate();
   }
-  // Handle ISO timestamp e.g. 2026-05-01T05:00:00.000Z
-  if(s.indexOf('T') > -1) { s = s.split('T')[0]; }
-  // Handle YYYY-MM-DD
+  // Fallback: YYYY-MM-DD
+  var s = String(d);
   if(s.indexOf('-') > -1) {
     var p = s.split('-');
-    if(p.length === 3) return p[1]+'/'+p[2]+'/'+p[0];
+    if(p.length >= 2) return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
   }
-  // Handle MM/DD/YYYY
-  if(s.indexOf('/') > -1) return s;
   return s;
 }
 function daysUntil(d) {
   if(!d) return null;
-  var s = String(d);
-  var dt;
-  // Already a full date string like "Fri May 01 2026..."
-  if(s.indexOf('GMT') > -1 || s.match(/[A-Za-z]{3} [A-Za-z]{3}/)) {
-    dt = new Date(s);
-  } else if(s.indexOf('T') > -1) {
-    dt = new Date(s.split('T')[0]);
-  } else if(s.indexOf('/') > -1) {
-    var p = s.split('/');
-    dt = new Date(p[2]+'-'+p[0]+'-'+p[1]);
-  } else {
-    dt = new Date(s);
-  }
+  var dt = new Date(d);
   if(isNaN(dt)) return null;
   var now = new Date(); now.setHours(0,0,0,0);
   return Math.ceil((dt-now)/86400000);
